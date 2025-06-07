@@ -987,248 +987,139 @@
   </div>
 
   <script>
-    // App State
-    let currentUser = null;
-    let isLoggedIn = false;
+    // Option 1: Direct URL replacement (Replace YOUR_RENDER_BACKEND_URL with your actual backend URL)
+async function sendMessage() {
+  const input = document.getElementById('messageInput');
+  const sendButton = document.getElementById('sendButton');
+  const message = input.value.trim();
 
-    // Login Functions
-    function handleLogin(event) {
-      event.preventDefault();
-      
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const loginButton = document.getElementById('loginButton');
-      
-      // Simulate login validation
-      if (!email || !password) {
-        alert('Please fill in all fields');
-        return;
-      }
-      
-      loginButton.disabled = true;
-      loginButton.textContent = 'Signing In...';
-      
-      // Simulate API call
-      setTimeout(() => {
-        // For demo purposes, accept any email/password
-        currentUser = {
-          name: email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-          email: email,
-          avatar: email.charAt(0).toUpperCase() + (email.split('@')[0].charAt(1) || '').toUpperCase()
-        };
-        
-        isLoggedIn = true;
-        showMainApp();
-        
-        loginButton.disabled = false;
-        loginButton.textContent = 'Sign In';
-      }, 1500);
-    }
+  if (!message) {
+    input.focus();
+    return;
+  }
 
-    function showMainApp() {
-      document.getElementById('loginPage').classList.add('hidden');
-      document.getElementById('mainApp').classList.remove('hidden');
-      
-      // Update user info in sidebar
-      document.getElementById('userName').textContent = currentUser.name;
-      document.getElementById('userEmail').textContent = currentUser.email;
-      document.getElementById('userAvatar').textContent = currentUser.avatar;
-      
-      // Focus on input
-      document.getElementById('messageInput').focus();
-    }
+  // Add user message
+  addMessage(message, true);
+  
+  // Clear input
+  input.value = '';
+  autoResize();
 
-    function logout() {
-      isLoggedIn = false;
-      currentUser = null;
-      document.getElementById('loginPage').classList.remove('hidden');
-      document.getElementById('mainApp').classList.add('hidden');
-      document.getElementById('loginForm').reset();
-    }
+  // Update UI state
+  sendButton.disabled = true;
+  sendButton.innerHTML = '<span>⋯</span>';
+  updateStatus('Processing...', 'processing');
+  showThinking();
 
-    // Chat Functions
-    function startNewChat() {
-      document.getElementById('welcomeSection').classList.remove('hidden');
-      document.getElementById('messagesContainer').classList.add('hidden');
-      document.getElementById('messagesContainer').innerHTML = '';
-      document.getElementById('messageInput').value = '';
-      document.getElementById('messageInput').focus();
-    }
-
-    function setExample(command) {
-      const input = document.getElementById('messageInput');
-      input.value = command;
-      input.focus();
-      autoResize();
-    }
-
-    function addMessage(content, isUser = false, isError = false) {
-      const container = document.getElementById('messagesContainer');
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-
-      const avatarContent = isUser ? currentUser.avatar : 'DC';
-      const senderName = isUser ? 'You' : 'DevCascade';
-
-      messageDiv.innerHTML = `
-        <div class="message-header">
-          <div class="message-avatar">${avatarContent}</div>
-          <div class="message-sender">${senderName}</div>
-        </div>
-        <div class="message-content ${isError ? 'error' : ''}">${content}</div>
-      `;
-
-      container.appendChild(messageDiv);
-      
-      // Show messages container if hidden
-      if (container.classList.contains('hidden')) {
-        document.getElementById('welcomeSection').classList.add('hidden');
-        container.classList.remove('hidden');
-      }
-      
-      scrollToBottom();
-    }
-
-    function showThinking() {
-      const container = document.getElementById('messagesContainer');
-      const thinkingDiv = document.createElement('div');
-      thinkingDiv.className = 'message bot-message';
-      thinkingDiv.id = 'thinkingMessage';
-
-      thinkingDiv.innerHTML = `
-        <div class="message-header">
-          <div class="message-avatar">DC</div>
-          <div class="message-sender">DevCascade</div>
-        </div>
-        <div class="thinking-indicator">
-          <div class="thinking-dots">
-            <div class="thinking-dot"></div>
-            <div class="thinking-dot"></div>
-            <div class="thinking-dot"></div>
-          </div>
-          <span>Processing your request...</span>
-        </div>
-      `;
-
-      container.appendChild(thinkingDiv);
-      
-      // Show messages container if hidden
-      if (container.classList.contains('hidden')) {
-        document.getElementById('welcomeSection').classList.add('hidden');
-        container.classList.remove('hidden');
-      }
-      
-      scrollToBottom();
-    }
-
-    function hideThinking() {
-      const thinkingMessage = document.getElementById('thinkingMessage');
-      if (thinkingMessage) {
-        thinkingMessage.remove();
-      }
-    }
-
-    function updateStatus(status, type = 'ready') {
-      const statusText = document.getElementById('statusText');
-      const statusDot = document.getElementById('statusDot');
-      
-      statusText.textContent = status;
-      statusDot.className = `status-dot ${type}`;
-    }
-
-    function autoResize() {
-      const textarea = document.getElementById('messageInput');
-      textarea.style.height = 'auto';
-      textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
-    }
-
-    function scrollToBottom() {
-      const container = document.querySelector('.chat-area');
-      container.scrollTop = container.scrollHeight;
-    }
-
-    async function sendMessage() {
-      const input = document.getElementById('messageInput');
-      const sendButton = document.getElementById('sendButton');
-      const message = input.value.trim();
-
-      if (!message) {
-        input.focus();
-        return;
-      }
-
-      // Add user message
-      addMessage(message, true);
-      
-      // Clear input
-      input.value = '';
-      autoResize();
-
-      // Update UI state
-      sendButton.disabled = true;
-      sendButton.innerHTML = '<span>⋯</span>';
-      updateStatus('Processing...', 'processing');
-      showThinking();
-
-      try {
-        const response = await fetch('http://localhost:8000/api/command', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ command: message })
-        });
-
-        const data = await response.json();
-        hideThinking();
-
-        if (data.error) {
-          addMessage(` Error: ${data.error}`, false, true);
-          updateStatus('Error', 'error');
-        } else {
-          addMessage(data.response, false, false);
-          updateStatus('Ready', 'ready');
-        }
-
-      } catch (error) {
-        hideThinking();
-        addMessage(`🔌 Connection Error: Unable to connect to the server. Please check if the backend is running.`, false, true);
-        updateStatus('Connection Error', 'error');
-      } finally {
-        sendButton.disabled = false;
-        sendButton.innerHTML = '<span>→</span>';
-        input.focus();
-      }
-    }
-
-    function showUserMenu() {
-      if (confirm('Would you like to sign out?')) {
-        logout();
-      }
-    }
-
-    // Event Listeners
-    document.addEventListener('DOMContentLoaded', function() {
-      // Login form handler
-      document.getElementById('loginForm').addEventListener('submit', handleLogin);
-      
-      // Input auto-resize
-      document.getElementById('messageInput').addEventListener('input', autoResize);
-      
-      // Keyboard shortcuts
-      document.getElementById('messageInput').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          if (isLoggedIn) {
-            sendMessage();
-          }
-        }
-      });
-      console.log('Demo: Use any email and password to login');
+  try {
+    // Your actual Render backend URL
+    const response = await fetch('https://adityathepro.onrender.com/api/command', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ command: message })
     });
-    function initializeApp() {
-      document.getElementById('loginPage').classList.remove('hidden');
+
+    const data = await response.json();
+    hideThinking();
+
+    if (data.error) {
+      addMessage(`❌ Error: ${data.error}`, false, true);
+      updateStatus('Error', 'error');
+    } else {
+      addMessage(data.response, false, false);
+      updateStatus('Ready', 'ready');
     }
 
-    initializeApp();
+  } catch (error) {
+    hideThinking();
+    addMessage(`🔌 Connection Error: Unable to connect to the server. Please check if the backend is running.`, false, true);
+    updateStatus('Connection Error', 'error');
+  } finally {
+    sendButton.disabled = false;
+    sendButton.innerHTML = '<span>→</span>';
+    input.focus();
+  }
+}
+
+// Option 2: Dynamic URL detection (Recommended)
+// Add this at the top of your file
+const API_BASE_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:8000' 
+  ? 'https://adityathepro.onrender.com';
+
+// Then use it in sendMessage function:
+async function sendMessage() {
+  const input = document.getElementById('messageInput');
+  const sendButton = document.getElementById('sendButton');
+  const message = input.value.trim();
+
+  if (!message) {
+    input.focus();
+    return;
+  }
+
+  // Add user message
+  addMessage(message, true);
+  
+  // Clear input
+  input.value = '';
+  autoResize();
+
+  // Update UI state
+  sendButton.disabled = true;
+  sendButton.innerHTML = '<span>⋯</span>';
+  updateStatus('Processing...', 'processing');
+  showThinking();
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/command`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ command: message })
+    });
+
+    const data = await response.json();
+    hideThinking();
+
+    if (data.error) {
+      addMessage(`❌ Error: ${data.error}`, false, true);
+      updateStatus('Error', 'error');
+    } else {
+      addMessage(data.response, false, false);
+      updateStatus('Ready', 'ready');
+    }
+
+  } catch (error) {
+    hideThinking();
+    addMessage(`🔌 Connection Error: Unable to connect to the server. Please check if the backend is running.`, false, true);
+    updateStatus('Connection Error', 'error');
+  } finally {
+    sendButton.disabled = false;
+    sendButton.innerHTML = '<span>→</span>';
+    input.focus();
+  }
+}
+
+// Option 3: Environment-based configuration (Most Professional)
+// Add this configuration object at the top
+const CONFIG = {
+  development: {
+    API_URL: 'http://localhost:8000'
+  },
+  production: {
+    API_URL: 'https://adityathepro.onrender.com'
+  }
+};
+
+const environment = window.location.hostname === 'localhost' ? 'development' : 'production';
+const API_URL = CONFIG[environment].API_URL;
+
+// Then use API_URL in your fetch call:
+const response = await fetch(`${API_URL}/api/command`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ command: message })
+});
   </script>
 </body>
 </html>
