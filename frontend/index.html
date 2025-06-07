@@ -987,30 +987,30 @@
   </div>
 
   <script>
-    // Option 1: Direct URL replacement (Replace YOUR_RENDER_BACKEND_URL with your actual backend URL)
+    // Option 1: Direct URL configuration (Simple approach)
 async function sendMessage() {
   const input = document.getElementById('messageInput');
   const sendButton = document.getElementById('sendButton');
   const message = input.value.trim();
-
+  
   if (!message) {
     input.focus();
     return;
   }
-
+  
   // Add user message
   addMessage(message, true);
   
   // Clear input
   input.value = '';
   autoResize();
-
+  
   // Update UI state
   sendButton.disabled = true;
   sendButton.innerHTML = '<span>⋯</span>';
   updateStatus('Processing...', 'processing');
   showThinking();
-
+  
   try {
     // Your actual Render backend URL
     const response = await fetch('https://adityathepro.onrender.com/api/command', {
@@ -1018,10 +1018,10 @@ async function sendMessage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ command: message })
     });
-
+    
     const data = await response.json();
     hideThinking();
-
+    
     if (data.error) {
       addMessage(`❌ Error: ${data.error}`, false, true);
       updateStatus('Error', 'error');
@@ -1029,7 +1029,6 @@ async function sendMessage() {
       addMessage(data.response, false, false);
       updateStatus('Ready', 'ready');
     }
-
   } catch (error) {
     hideThinking();
     addMessage(`🔌 Connection Error: Unable to connect to the server. Please check if the backend is running.`, false, true);
@@ -1042,45 +1041,43 @@ async function sendMessage() {
 }
 
 // Option 2: Dynamic URL detection (Recommended)
-// Add this at the top of your file
 const API_BASE_URL = window.location.hostname === 'localhost' 
   ? 'http://localhost:8000' 
-  ? 'https://adityathepro.onrender.com';
+  : 'https://adityathepro.onrender.com'; // Fixed: Added colon instead of question mark
 
-// Then use it in sendMessage function:
-async function sendMessage() {
+async function sendMessageDynamic() {
   const input = document.getElementById('messageInput');
   const sendButton = document.getElementById('sendButton');
   const message = input.value.trim();
-
+  
   if (!message) {
     input.focus();
     return;
   }
-
+  
   // Add user message
   addMessage(message, true);
   
   // Clear input
   input.value = '';
   autoResize();
-
+  
   // Update UI state
   sendButton.disabled = true;
   sendButton.innerHTML = '<span>⋯</span>';
   updateStatus('Processing...', 'processing');
   showThinking();
-
+  
   try {
     const response = await fetch(`${API_BASE_URL}/api/command`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ command: message })
     });
-
+    
     const data = await response.json();
     hideThinking();
-
+    
     if (data.error) {
       addMessage(`❌ Error: ${data.error}`, false, true);
       updateStatus('Error', 'error');
@@ -1088,7 +1085,6 @@ async function sendMessage() {
       addMessage(data.response, false, false);
       updateStatus('Ready', 'ready');
     }
-
   } catch (error) {
     hideThinking();
     addMessage(`🔌 Connection Error: Unable to connect to the server. Please check if the backend is running.`, false, true);
@@ -1101,7 +1097,6 @@ async function sendMessage() {
 }
 
 // Option 3: Environment-based configuration (Most Professional)
-// Add this configuration object at the top
 const CONFIG = {
   development: {
     API_URL: 'http://localhost:8000'
@@ -1114,12 +1109,56 @@ const CONFIG = {
 const environment = window.location.hostname === 'localhost' ? 'development' : 'production';
 const API_URL = CONFIG[environment].API_URL;
 
-// Then use API_URL in your fetch call:
-const response = await fetch(`${API_URL}/api/command`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ command: message })
-});
+async function sendMessageConfig() {
+  const input = document.getElementById('messageInput');
+  const sendButton = document.getElementById('sendButton');
+  const message = input.value.trim();
+  
+  if (!message) {
+    input.focus();
+    return;
+  }
+  
+  // Add user message
+  addMessage(message, true);
+  
+  // Clear input
+  input.value = '';
+  autoResize();
+  
+  // Update UI state
+  sendButton.disabled = true;
+  sendButton.innerHTML = '<span>⋯</span>';
+  updateStatus('Processing...', 'processing');
+  showThinking();
+  
+  try {
+    const response = await fetch(`${API_URL}/api/command`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ command: message })
+    });
+    
+    const data = await response.json();
+    hideThinking();
+    
+    if (data.error) {
+      addMessage(`❌ Error: ${data.error}`, false, true);
+      updateStatus('Error', 'error');
+    } else {
+      addMessage(data.response, false, false);
+      updateStatus('Ready', 'ready');
+    }
+  } catch (error) {
+    hideThinking();
+    addMessage(`🔌 Connection Error: Unable to connect to the server. Please check if the backend is running.`, false, true);
+    updateStatus('Connection Error', 'error');
+  } finally {
+    sendButton.disabled = false;
+    sendButton.innerHTML = '<span>→</span>';
+    input.focus();
+  }
+}
   </script>
 </body>
 </html>
