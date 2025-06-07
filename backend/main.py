@@ -18,12 +18,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static files - adjust path based on your project structure
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
+# Mount static files - path relative to backend directory
+app.mount("/static", StaticFiles(directory="../frontend"), name="static")
 
 @app.get("/")
 async def serve_index():
-    return FileResponse("frontend/index.html")
+    return FileResponse("../frontend/index.html")
 
 # Add API health check
 @app.get("/health")
@@ -68,6 +68,8 @@ async def handle_command(cmd: Command):
         
         model = genai.GenerativeModel("gemini-1.5-flash")
         response = model.generate_content(full_prompt)
+        
+        # Format the response to ensure single paragraph structure
         formatted_response = format_response(response.text)
         
         return {"response": formatted_response}
