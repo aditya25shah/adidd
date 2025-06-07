@@ -17,11 +17,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.mount("/static", StaticFiles(directory="../frontend"), name="static")
+
+# Mount static files - adjust path based on your project structure
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
 @app.get("/")
 async def serve_index():
-    return FileResponse("../frontend/index.html")
+    return FileResponse("frontend/index.html")
+
+# Add API health check
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "devcascade-api"}
 
 class Command(BaseModel):
     command: str
@@ -61,8 +68,6 @@ async def handle_command(cmd: Command):
         
         model = genai.GenerativeModel("gemini-1.5-flash")
         response = model.generate_content(full_prompt)
-        
-        # Format the response to ensure single paragraph structure
         formatted_response = format_response(response.text)
         
         return {"response": formatted_response}
