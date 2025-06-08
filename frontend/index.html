@@ -987,65 +987,32 @@
   </div>
 
   <script>
-    // Option 1: Direct URL configuration (Simple approach)
-async function sendMessage() {
-  const input = document.getElementById('messageInput');
-  const sendButton = document.getElementById('sendButton');
-  const message = input.value.trim();
-  
-  if (!message) {
-    input.focus();
-    return;
-  }
-  
-  // Add user message
-  addMessage(message, true);
-  
-  // Clear input
-  input.value = '';
-  autoResize();
-  
-  // Update UI state
-  sendButton.disabled = true;
-  sendButton.innerHTML = '<span>⋯</span>';
-  updateStatus('Processing...', 'processing');
-  showThinking();
-  
-  try {
-    // Your actual Render backend URL
-    const response = await fetch('https://adityathepro.onrender.com/api/command', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ command: message })
-    });
-    
-    const data = await response.json();
-    hideThinking();
-    
-    if (data.error) {
-      addMessage(`❌ Error: ${data.error}`, false, true);
-      updateStatus('Error', 'error');
-    } else {
-      addMessage(data.response, false, false);
-      updateStatus('Ready', 'ready');
-    }
-  } catch (error) {
-    hideThinking();
-    addMessage(`🔌 Connection Error: Unable to connect to the server. Please check if the backend is running.`, false, true);
-    updateStatus('Connection Error', 'error');
-  } finally {
-    sendButton.disabled = false;
-    sendButton.innerHTML = '<span>→</span>';
-    input.focus();
-  }
-}
-
-// Option 2: Dynamic URL detection (Recommended)
+<script>
+// Configuration
 const API_BASE_URL = window.location.hostname === 'localhost' 
   ? 'http://localhost:8000' 
-  : 'https://adityathepro.onrender.com'; // Fixed: Added colon instead of question mark
+  : 'https://adityathepro.onrender.com';
 
-async function sendMessageDynamic() {
+// Login functionality
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  
+  // Simple demo login - replace with real authentication
+  if (email && password) {
+    document.getElementById('loginPage').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    
+    // Set user info
+    document.getElementById('userName').textContent = email.split('@')[0];
+    document.getElementById('userEmail').textContent = email;
+    document.getElementById('userAvatar').textContent = email.charAt(0).toUpperCase();
+  }
+});
+
+// Main send message function
+async function sendMessage() {
   const input = document.getElementById('messageInput');
   const sendButton = document.getElementById('sendButton');
   const message = input.value.trim();
@@ -1096,69 +1063,107 @@ async function sendMessageDynamic() {
   }
 }
 
-// Option 3: Environment-based configuration (Most Professional)
-const CONFIG = {
-  development: {
-    API_URL: 'http://localhost:8000'
-  },
-  production: {
-    API_URL: 'https://adityathepro.onrender.com'
+// Helper functions
+function addMessage(content, isUser, isError = false) {
+  const messagesContainer = document.getElementById('messagesContainer');
+  const welcomeSection = document.getElementById('welcomeSection');
+  
+  // Hide welcome section and show messages
+  if (!messagesContainer.classList.contains('hidden')) {
+    welcomeSection.classList.add('hidden');
   }
-};
-
-const environment = window.location.hostname === 'localhost' ? 'development' : 'production';
-const API_URL = CONFIG[environment].API_URL;
-
-async function sendMessageConfig() {
-  const input = document.getElementById('messageInput');
-  const sendButton = document.getElementById('sendButton');
-  const message = input.value.trim();
+  messagesContainer.classList.remove('hidden');
   
-  if (!message) {
-    input.focus();
-    return;
-  }
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'} ${isError ? 'error-message' : ''}`;
   
-  // Add user message
-  addMessage(message, true);
+  messageDiv.innerHTML = `
+    <div class="message-header">
+      <div class="message-avatar">${isUser ? 'U' : 'AI'}</div>
+      <div class="message-sender">${isUser ? 'You' : 'DevCascade'}</div>
+    </div>
+    <div class="message-content">${content}</div>
+  `;
   
-  // Clear input
-  input.value = '';
-  autoResize();
-  
-  // Update UI state
-  sendButton.disabled = true;
-  sendButton.innerHTML = '<span>⋯</span>';
-  updateStatus('Processing...', 'processing');
-  showThinking();
-  
-  try {
-    const response = await fetch(`${API_URL}/api/command`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ command: message })
-    });
-    
-    const data = await response.json();
-    hideThinking();
-    
-    if (data.error) {
-      addMessage(`❌ Error: ${data.error}`, false, true);
-      updateStatus('Error', 'error');
-    } else {
-      addMessage(data.response, false, false);
-      updateStatus('Ready', 'ready');
-    }
-  } catch (error) {
-    hideThinking();
-    addMessage(`🔌 Connection Error: Unable to connect to the server. Please check if the backend is running.`, false, true);
-    updateStatus('Connection Error', 'error');
-  } finally {
-    sendButton.disabled = false;
-    sendButton.innerHTML = '<span>→</span>';
-    input.focus();
-  }
+  messagesContainer.appendChild(messageDiv);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
+
+function showThinking() {
+  const messagesContainer = document.getElementById('messagesContainer');
+  const thinkingDiv = document.createElement('div');
+  thinkingDiv.id = 'thinkingIndicator';
+  thinkingDiv.className = 'thinking-indicator';
+  thinkingDiv.innerHTML = `
+    <span>DevCascade is thinking</span>
+    <div class="thinking-dots">
+      <div class="thinking-dot"></div>
+      <div class="thinking-dot"></div>
+      <div class="thinking-dot"></div>
+    </div>
+  `;
+  messagesContainer.appendChild(thinkingDiv);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function hideThinking() {
+  const thinking = document.getElementById('thinkingIndicator');
+  if (thinking) thinking.remove();
+}
+
+function updateStatus(text, type) {
+  const statusText = document.getElementById('statusText');
+  const statusDot = document.getElementById('statusDot');
+  
+  statusText.textContent = text;
+  statusDot.className = `status-dot ${type}`;
+}
+
+function autoResize() {
+  const textarea = document.getElementById('messageInput');
+  textarea.style.height = 'auto';
+  textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+}
+
+function setExample(text) {
+  document.getElementById('messageInput').value = text;
+  autoResize();
+  document.getElementById('messageInput').focus();
+}
+
+function startNewChat() {
+  const messagesContainer = document.getElementById('messagesContainer');
+  const welcomeSection = document.getElementById('welcomeSection');
+  
+  messagesContainer.innerHTML = '';
+  messagesContainer.classList.add('hidden');
+  welcomeSection.classList.remove('hidden');
+  
+  document.getElementById('messageInput').value = '';
+  updateStatus('Ready', 'ready');
+}
+
+function showUserMenu() {
+  // Add user menu functionality here
+  console.log('User menu clicked');
+}
+
+// Event listeners
+document.getElementById('messageInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+document.getElementById('messageInput').addEventListener('input', autoResize);
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  updateStatus('Ready', 'ready');
+  document.getElementById('messageInput').focus();
+});
+</script>
   </script>
 </body>
 </html>
